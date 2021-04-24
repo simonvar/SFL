@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="SFL.Button.Circle" parent="">
+        <item name="android:stateListAnimator">@animator/state_anim_circle_btn</item>
+        <item name="android:background">@drawable/bg_circle_button</item>
+    </style>
+
+</resources>

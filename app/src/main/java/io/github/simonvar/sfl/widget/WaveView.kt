@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
+import io.github.simonvar.sfl.R
 
 class WaveView @JvmOverloads constructor(
     context: Context,
@@ -40,11 +41,8 @@ class WaveView @JvmOverloads constructor(
     }
 
     private fun initAttributes(context: Context, attrs: AttributeSet?) {
-//        val values = context.obtainStyledAttributes(attrs, R.styleable.PincodeView)
-//        max = values.getInteger(R.styleable.PincodeView_pv_max, DEFAULT_MAX_DOTS)
-//        defaultColor = values.getColor(R.styleable.PincodeView_pv_default_color, Color.GRAY)
-//        defaultPaint.color = defaultColor
-//        values.recycle()
+        val values = context.obtainStyledAttributes(attrs, R.styleable.WaveView)
+        values.recycle()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -86,4 +84,7 @@ class WaveView @JvmOverloads constructor(
     interface Adapter {
         fun append(level: Int)
     }
+
+    interface OnLevelsCountChanged : (Int) -> Unit
+
 }

@@ -53,21 +53,28 @@ class RecordScreen : Fragment(R.layout.screen_record) {
 
     private fun initControls() = with(binding) {
         recordStopButton.setOnClickListener {
-            content = RecordContent.Record
-            animateBackgroundColor()
-            if (recordStopButton.state == SwitchCircleButton.FIRST) {
-                animatorToPlayState(binding).start()
+            when (recordStopButton.state) {
+                SwitchCircleButton.FIRST -> {
+                    content = RecordContent.Record
+                    recordStopButton.moveToNextState()
+                }
+                SwitchCircleButton.SECOND -> {
+                    content = RecordContent.Play
+                    animatorToPlayState(binding).start()
+                }
             }
+            animateBackgroundColor()
         }
 
         playPauseButton.setOnClickListener {
-            content = RecordContent.Play
             animateBackgroundColor()
+            playPauseButton.moveToNextState()
         }
 
         resetButton.setOnClickListener {
             content = RecordContent.Idle
             animateBackgroundColor()
+            recordStopButton.jumpToNextState()
             animatorToRecordState(binding).start()
         }
     }

@@ -4,8 +4,7 @@
     tools:layout_height="wrap_content"
     tools:layout_width="wrap_content"
     tools:orientation="vertical"
-    tools:parentTag="android.widget.LinearLayout"
-    tools:viewBindingIgnore="true">
+    tools:parentTag="android.widget.LinearLayout">
 
     <FrameLayout
         android:id="@+id/icons_container"

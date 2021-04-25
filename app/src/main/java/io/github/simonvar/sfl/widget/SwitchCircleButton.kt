@@ -27,7 +27,7 @@ class SwitchCircleButton @JvmOverloads constructor(
 
     companion object {
         const val FIRST = 0
-        const val SECOND = 0
+        const val SECOND = 1
     }
 
     var state by this::currentState
@@ -74,6 +74,38 @@ class SwitchCircleButton @JvmOverloads constructor(
         initView(context, attrs)
     }
 
+    fun moveToNextState() {
+        if (secondIconId == 0) return
+        val nextState = (currentState + 1) % 2
+        when (nextState) {
+            0 -> startIconAnimation(innerSecondImage, innerFirstImage)
+            1 -> startIconAnimation(innerFirstImage, innerSecondImage)
+            else -> throw IllegalStateException("Can't be more than two states!")
+        }
+        currentState = nextState
+    }
+
+    fun jumpToNextState() {
+        if (secondIconId == 0) return
+        val nextState = (currentState + 1) % 2
+        when (nextState) {
+            0 -> {
+                innerFirstImage.show()
+                innerSecondImage.hide()
+            }
+            1 -> {
+                innerFirstImage.hide()
+                innerSecondImage.show()
+            }
+            else -> throw IllegalStateException("Can't be more than two states!")
+        }
+        currentState = nextState
+    }
+
+    override fun setOnClickListener(listener: OnClickListener?) {
+        innerButton.setOnClickListener(listener)
+    }
+
     private fun initView(context: Context, attrs: AttributeSet) {
         orientation = VERTICAL
 
@@ -102,19 +134,8 @@ class SwitchCircleButton @JvmOverloads constructor(
     }
 
     private fun initIcons() {
-        with(innerFirstImage) {
-            isVisible = true
-            scaleX = 1F
-            scaleY = 1F
-            rotation = 0F
-        }
-
-        with(innerSecondImage) {
-            isVisible = true
-            scaleX = 0F
-            scaleY = 0F
-            rotation = -90F
-        }
+        innerFirstImage.show()
+        innerSecondImage.hide()
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -127,24 +148,6 @@ class SwitchCircleButton @JvmOverloads constructor(
             pivotX = width / 2F
             pivotY = height / 2F
         }
-    }
-
-    override fun setOnClickListener(listener: OnClickListener?) {
-        innerButton.setOnClickListener {
-            listener?.onClick(it)
-            moveToNextState()
-        }
-    }
-
-    private fun moveToNextState() {
-        if (secondIconId == 0) return
-        val nextState = (currentState + 1) % 2
-        when (nextState) {
-            0 -> startIconAnimation(innerSecondImage, innerFirstImage)
-            1 -> startIconAnimation(innerFirstImage, innerSecondImage)
-            else -> throw IllegalStateException("Can't be more than two states!")
-        }
-        currentState = nextState
     }
 
     private fun startIconAnimation(targetOut: View, targetIn: View) {
@@ -170,4 +173,20 @@ class SwitchCircleButton @JvmOverloads constructor(
                 setTarget(target)
             }
     }
+
+    private fun ImageView.show() {
+        isVisible = true
+        scaleX = 1F
+        scaleY = 1F
+        rotation = 0F
+    }
+
+    private fun ImageView.hide() {
+        isVisible = true
+        scaleX = 0F
+        scaleY = 0F
+        rotation = -90F
+    }
+
+    interface OnStateChanged : (Int) -> Unit
 }

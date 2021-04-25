@@ -5,8 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/blue"
-    android:fitsSystemWindows="true"
-    tools:context=".ui.MainActivity">
+    tools:context=".MainActivity">
 
     <io.github.simonvar.sfl.widget.WaveView
         android:layout_width="0dp"
@@ -20,6 +19,7 @@
         android:id="@+id/record_stop_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:duration="@integer/state_changes_anim_duration"
         android:text="@string/record"
         android:tint="@color/blue"
         app:drawable_first="@drawable/ic_record"
@@ -32,13 +32,14 @@
         android:id="@+id/play_pause_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="24dp"
+        android:duration="@integer/state_changes_anim_duration"
         android:text="@string/play"
         android:tint="@color/teal"
         app:drawable_first="@drawable/ic_play"
         app:drawable_second="@drawable/ic_pause"
         app:layout_constraintBottom_toTopOf="@id/bottom_space"
+        app:layout_constraintEnd_toStartOf="@id/reset_button"
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -47,12 +48,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginEnd="8dp"
         android:text="@string/reset"
         android:tint="@color/teal"
         app:drawable_first="@drawable/ic_reset"
         app:layout_constraintBottom_toTopOf="@id/bottom_space"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/play_pause_button" />
 
     <Space
         android:id="@+id/bottom_space"

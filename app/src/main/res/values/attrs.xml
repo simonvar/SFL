@@ -4,6 +4,7 @@
     <declare-styleable name="SwitchCircleButton">
         <attr name="android:text" format="string" />
         <attr name="android:tint" format="color" />
+        <attr name="android:duration" format="integer" />
         <attr name="drawable_first" format="reference" />
         <attr name="drawable_second" format="reference" />
     </declare-styleable>

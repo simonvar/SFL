@@ -25,6 +25,14 @@ class SwitchCircleButton @JvmOverloads constructor(
     defStyleRes: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr, defStyleRes) {
 
+    companion object {
+        const val FIRST = 0
+        const val SECOND = 0
+    }
+
+    var state by this::currentState
+        private set
+
     var text: CharSequence = ""
         set(value) {
             field = value
@@ -38,6 +46,8 @@ class SwitchCircleButton @JvmOverloads constructor(
             innerFirstImage.imageTintList = ColorStateList.valueOf(value)
             innerSecondImage.imageTintList = ColorStateList.valueOf(value)
         }
+
+    var duration: Long = 0L
 
     @DrawableRes
     var firstIconId: Int = 0
@@ -58,7 +68,7 @@ class SwitchCircleButton @JvmOverloads constructor(
     private lateinit var innerSecondImage: ImageView
     private lateinit var innerTextView: TextView
 
-    private var currentState = 0
+    private var currentState = FIRST
 
     init {
         initView(context, attrs)
@@ -84,6 +94,7 @@ class SwitchCircleButton @JvmOverloads constructor(
 
         text = values.getString(R.styleable.SwitchCircleButton_android_text).orEmpty()
         tint = values.getColor(R.styleable.SwitchCircleButton_android_tint, 0)
+        duration = values.getInteger(R.styleable.SwitchCircleButton_android_duration, 0).toLong()
         firstIconId = values.getResourceId(R.styleable.SwitchCircleButton_drawable_first, 0)
         secondIconId = values.getResourceId(R.styleable.SwitchCircleButton_drawable_second, 0)
 
@@ -143,18 +154,20 @@ class SwitchCircleButton @JvmOverloads constructor(
     }
 
     private fun iconOutAnimator(target: View): Animator {
-        return AnimatorInflater.loadAnimator(context, R.animator.anim_icon_out)
+        return AnimatorInflater
+            .loadAnimator(context, R.animator.anim_icon_out)
             .apply {
+                duration = this@SwitchCircleButton.duration
                 setTarget(target)
-
             }
     }
 
     private fun iconInAnimator(target: View): Animator {
-        return AnimatorInflater.loadAnimator(context, R.animator.anim_icon_in)
+        return AnimatorInflater
+            .loadAnimator(context, R.animator.anim_icon_in)
             .apply {
+                duration = this@SwitchCircleButton.duration
                 setTarget(target)
             }
     }
-
 }

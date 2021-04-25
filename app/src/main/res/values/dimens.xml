@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <integer name="state_changes_anim_duration">300</integer>
     <dimen name="circle_button_size">72dp</dimen>
     <dimen name="control_bottom_margin">58dp</dimen>
 </resources>

@@ -3,7 +3,6 @@ package io.github.simonvar.sfl.widget
 import android.animation.Animator
 import android.animation.AnimatorInflater
 import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
@@ -18,7 +17,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import io.github.simonvar.sfl.R
 
-class SwitchCircleButton @JvmOverloads constructor(
+class CircleButton @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet,
     defStyleAttr: Int = 0,
@@ -74,21 +73,23 @@ class SwitchCircleButton @JvmOverloads constructor(
         initView(context, attrs)
     }
 
-    fun moveToNextState() {
+    fun moveToState(newState: Int) {
         if (secondIconId == 0) return
-        val nextState = (currentState + 1) % 2
-        when (nextState) {
+        if (newState > SECOND) return
+
+        when (newState) {
             0 -> startIconAnimation(innerSecondImage, innerFirstImage)
             1 -> startIconAnimation(innerFirstImage, innerSecondImage)
             else -> throw IllegalStateException("Can't be more than two states!")
         }
-        currentState = nextState
+        currentState = newState
     }
 
-    fun jumpToNextState() {
+    fun jumpToState(newState: Int) {
         if (secondIconId == 0) return
-        val nextState = (currentState + 1) % 2
-        when (nextState) {
+        if (newState > SECOND) return
+
+        when (newState) {
             0 -> {
                 innerFirstImage.show()
                 innerSecondImage.hide()
@@ -99,7 +100,7 @@ class SwitchCircleButton @JvmOverloads constructor(
             }
             else -> throw IllegalStateException("Can't be more than two states!")
         }
-        currentState = nextState
+        currentState = newState
     }
 
     override fun setOnClickListener(listener: OnClickListener?) {
@@ -160,7 +161,7 @@ class SwitchCircleButton @JvmOverloads constructor(
         return AnimatorInflater
             .loadAnimator(context, R.animator.anim_icon_out)
             .apply {
-                duration = this@SwitchCircleButton.duration
+                duration = this@CircleButton.duration
                 setTarget(target)
             }
     }
@@ -169,7 +170,7 @@ class SwitchCircleButton @JvmOverloads constructor(
         return AnimatorInflater
             .loadAnimator(context, R.animator.anim_icon_in)
             .apply {
-                duration = this@SwitchCircleButton.duration
+                duration = this@CircleButton.duration
                 setTarget(target)
             }
     }
@@ -186,6 +187,10 @@ class SwitchCircleButton @JvmOverloads constructor(
         scaleX = 0F
         scaleY = 0F
         rotation = -90F
+    }
+
+    private fun Int.dpAsPx(): Int {
+        return this * resources.displayMetrics.density.toInt()
     }
 
     interface OnStateChanged : (Int) -> Unit

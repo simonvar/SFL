@@ -15,11 +15,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <io.github.simonvar.sfl.widget.SwitchCircleButton
+    <io.github.simonvar.sfl.widget.CircleButton
         android:id="@+id/record_stop_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:duration="@integer/state_changes_anim_duration"
         android:text="@string/record"
         android:tint="@color/blue"
         app:drawable_first="@drawable/ic_record"
@@ -28,12 +27,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <io.github.simonvar.sfl.widget.SwitchCircleButton
+    <io.github.simonvar.sfl.widget.CircleButton
         android:id="@+id/play_pause_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"
-        android:duration="@integer/state_changes_anim_duration"
         android:text="@string/play"
         android:tint="@color/teal"
         app:drawable_first="@drawable/ic_play"
@@ -43,7 +41,7 @@
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <io.github.simonvar.sfl.widget.SwitchCircleButton
+    <io.github.simonvar.sfl.widget.CircleButton
         android:id="@+id/reset_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

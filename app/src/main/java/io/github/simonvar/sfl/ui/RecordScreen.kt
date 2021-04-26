@@ -4,46 +4,67 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
-import android.content.res.Configuration
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import io.github.simonvar.sfl.R
 import io.github.simonvar.sfl.databinding.ScreenRecordBinding
-import io.github.simonvar.sfl.widget.SwitchCircleButton
+import io.github.simonvar.sfl.widget.CircleButton
+import kotlinx.coroutines.flow.collect
 
 class RecordScreen : Fragment(R.layout.screen_record) {
 
+    companion object {
+        private const val ANIM_DURATION = 300L
+    }
+
     private lateinit var binding: ScreenRecordBinding
-
-    private val animDuration: Long by lazy {
-        resources.getInteger(R.integer.state_changes_anim_duration).toLong()
-    }
-
-    private var content: RecordContent = RecordContent.Idle
-
-    private val onGlobalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
-        with(binding) {
-            playPauseButton.translationY = controlTranslationY(root, playPauseButton)
-            resetButton.translationY = controlTranslationY(root, resetButton)
-        }
-    }
+    private val vm: RecordViewModel by viewModels()
+    private var buttonTranslationY = 0F
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding = ScreenRecordBinding.bind(view)
-        initView()
+        with(binding) {
+            root.doOnLayout {
+                buttonTranslationY = it.height - recordStopButton.y
+                playPauseButton.translationY = buttonTranslationY
+                resetButton.translationY = buttonTranslationY
+                initVM()
+            }
+        }
+        initButtons()
+        initColors()
     }
 
-    private fun initView() = with(binding) {
-        root.viewTreeObserver.addOnGlobalLayoutListener(onGlobalLayoutListener)
-        initControls()
-        initBackground()
+    private fun initButtons() = with(binding) {
+        recordStopButton.duration = ANIM_DURATION
+        recordStopButton.setOnClickListener {
+            when (recordStopButton.state) {
+                CircleButton.FIRST -> vm.onRecordClick()
+                CircleButton.SECOND -> vm.onStopClick()
+            }
+        }
+
+        playPauseButton.duration = ANIM_DURATION
+        playPauseButton.setOnClickListener {
+            when (playPauseButton.state) {
+                CircleButton.FIRST -> vm.onPlayClick()
+                CircleButton.SECOND -> vm.onPauseClick()
+            }
+        }
+
+        resetButton.setOnClickListener {
+            vm.onResetClick()
+        }
     }
 
-    private fun initBackground() = with(binding) {
+    private fun initColors() = with(binding) {
         val initColor = resources.getColor(R.color.blue)
         binding.root.setBackgroundColor(initColor)
         binding.recordStopButton.tint = initColor
@@ -51,98 +72,67 @@ class RecordScreen : Fragment(R.layout.screen_record) {
         binding.resetButton.tint = initColor
     }
 
-    private fun initControls() = with(binding) {
-        recordStopButton.setOnClickListener {
-            when (recordStopButton.state) {
-                SwitchCircleButton.FIRST -> {
-                    content = RecordContent.Record
-                    recordStopButton.moveToNextState()
-                }
-                SwitchCircleButton.SECOND -> {
-                    content = RecordContent.Play
-                    animatorToPlayState(binding).start()
-                }
+    private fun initVM() {
+        lifecycleScope.launchWhenCreated {
+            vm.state.collect {
+                handleContentState(it)
             }
-            animateBackgroundColor()
-        }
-
-        playPauseButton.setOnClickListener {
-            animateBackgroundColor()
-            playPauseButton.moveToNextState()
-        }
-
-        resetButton.setOnClickListener {
-            content = RecordContent.Idle
-            animateBackgroundColor()
-            recordStopButton.jumpToNextState()
-            animatorToRecordState(binding).start()
         }
     }
 
-    private fun animateBackgroundColor() {
-        val colorFrom = (binding.root.background as ColorDrawable).color
-
-        val colorTo = when (content) {
-            RecordContent.Idle -> resources.getColor(R.color.blue)
-            RecordContent.Record -> resources.getColor(R.color.red)
-            RecordContent.Play -> resources.getColor(R.color.teal)
-        }
-
-        ValueAnimator
-            .ofArgb(colorFrom, colorTo)
-            .apply {
-                duration = animDuration
-                addUpdateListener {
-                    val color = it.animatedValue as Int
-                    binding.root.setBackgroundColor(color)
-                    binding.recordStopButton.tint = color
-                    binding.playPauseButton.tint = color
-                    binding.resetButton.tint = color
-                }
-                start()
-            }
-    }
-
-    private fun animatorToPlayState(binding: ScreenRecordBinding): Animator {
-        with(binding) {
-            val set = AnimatorSet()
-            set.playTogether(
-                controlOutAnimator(root, recordStopButton),
-                controlInAnimator(playPauseButton),
-                controlInAnimator(resetButton),
-            )
-            set.duration = animDuration
-            return set
+    private fun handleContentState(content: RecordContent) {
+        when (content) {
+            RecordContent.Idle -> moveToIdleState()
+            RecordContent.Record -> moveToRecordState()
+            RecordContent.Pause -> moveToPauseState()
+            RecordContent.Play -> moveToPlayState()
         }
     }
 
-    private fun animatorToRecordState(binding: ScreenRecordBinding): Animator {
-        with(binding) {
-            val set = AnimatorSet()
-            set.playTogether(
-                controlInAnimator(recordStopButton),
-                controlOutAnimator(root, playPauseButton),
-                controlOutAnimator(root, resetButton)
-            )
-            set.duration = animDuration
-            return set
-        }
+    private fun moveToIdleState() = with(binding) {
+        recordStopButton.jumpToState(CircleButton.FIRST)
+        binding.toIdleStateAnimator()
     }
 
-    private fun controlInAnimator(target: View): Animator {
-        return ObjectAnimator
-            .ofFloat(target, View.TRANSLATION_Y, 0F)
-            .apply { interpolator = AccelerateDecelerateInterpolator() }
+    private fun moveToRecordState() = with(binding) {
+        recordStopButton.moveToState(CircleButton.SECOND)
+        binding.toRecordAnimator().start()
     }
 
-    private fun controlOutAnimator(container: View, target: View): Animator {
-        val translation = controlTranslationY(container, target)
-        return ObjectAnimator
-            .ofFloat(target, View.TRANSLATION_Y, translation)
-            .apply { interpolator = AccelerateDecelerateInterpolator() }
+    private fun moveToPauseState() = with(binding) {
+        playPauseButton.moveToState(CircleButton.FIRST)
+        binding.toPauseStateAnimator().start()
     }
 
-    private fun controlTranslationY(container: View, target: View): Float {
-        return container.height - target.y
+    private fun moveToPlayState() = with(binding) {
+        playPauseButton.moveToState(CircleButton.SECOND)
+    }
+
+    private fun ScreenRecordBinding.toRecordAnimator(): Animator {
+        return colorStateAnimator(RecordContent.Record, resources)
+    }
+
+    private fun ScreenRecordBinding.toPauseStateAnimator(): Animator {
+        val set = AnimatorSet()
+        set.playTogether(
+            colorStateAnimator(RecordContent.Pause, resources),
+            recordStopButton.outAnimator(buttonTranslationY),
+            playPauseButton.inAnimator(),
+            resetButton.inAnimator(),
+        )
+        set.duration = ANIM_DURATION
+        return set
+    }
+
+    private fun ScreenRecordBinding.toIdleStateAnimator(): Animator {
+        val set = AnimatorSet()
+        set.playTogether(
+            colorStateAnimator(RecordContent.Idle, resources),
+            recordStopButton.inAnimator(),
+            playPauseButton.outAnimator(buttonTranslationY),
+            resetButton.outAnimator(buttonTranslationY)
+        )
+        set.duration = ANIM_DURATION
+        return set
     }
 }

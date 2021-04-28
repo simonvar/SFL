@@ -2,13 +2,8 @@ package io.github.simonvar.sfl.ui
 
 import android.animation.Animator
 import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
-import android.view.ViewTreeObserver
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -16,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import io.github.simonvar.sfl.R
 import io.github.simonvar.sfl.databinding.ScreenRecordBinding
 import io.github.simonvar.sfl.widget.CircleButton
+import io.github.simonvar.sfl.widget.WaveView
 import kotlinx.coroutines.flow.collect
 
 class RecordScreen : Fragment(R.layout.screen_record) {
@@ -35,9 +31,16 @@ class RecordScreen : Fragment(R.layout.screen_record) {
                 buttonTranslationY = it.height - recordStopButton.y
                 playPauseButton.translationY = buttonTranslationY
                 resetButton.translationY = buttonTranslationY
-                initVM()
+
+                val params = WaveView.calculateParamsForWidth(it.width)
+                waveform.levelMarginPx = params.margin
+
+                initVM(params)
             }
+
         }
+
+
         initButtons()
         initColors()
     }
@@ -72,26 +75,34 @@ class RecordScreen : Fragment(R.layout.screen_record) {
         binding.resetButton.tint = initColor
     }
 
-    private fun initVM() {
+    private fun initVM(params: WaveView.Params) {
+        vm.onChangeLevelsCount(params.count)
+
         lifecycleScope.launchWhenCreated {
             vm.state.collect {
-                handleContentState(it)
+                handleRecordState(it)
+            }
+        }
+
+        lifecycleScope.launchWhenCreated {
+            vm.levels.collect {
+                binding.waveform.setLevels(it)
             }
         }
     }
 
-    private fun handleContentState(content: RecordContent) {
-        when (content) {
-            RecordContent.Idle -> moveToIdleState()
-            RecordContent.Record -> moveToRecordState()
-            RecordContent.Pause -> moveToPauseState()
-            RecordContent.Play -> moveToPlayState()
+    private fun handleRecordState(state: RecordState) {
+        when (state) {
+            RecordState.Idle -> moveToIdleState()
+            RecordState.Recording -> moveToRecordState()
+            RecordState.Paused -> moveToPauseState()
+            RecordState.Playing -> moveToPlayState()
         }
     }
 
     private fun moveToIdleState() = with(binding) {
         recordStopButton.jumpToState(CircleButton.FIRST)
-        binding.toIdleStateAnimator()
+        binding.toIdleStateAnimator().start()
     }
 
     private fun moveToRecordState() = with(binding) {
@@ -109,13 +120,13 @@ class RecordScreen : Fragment(R.layout.screen_record) {
     }
 
     private fun ScreenRecordBinding.toRecordAnimator(): Animator {
-        return colorStateAnimator(RecordContent.Record, resources)
+        return colorStateAnimator(RecordState.Recording, resources)
     }
 
     private fun ScreenRecordBinding.toPauseStateAnimator(): Animator {
         val set = AnimatorSet()
         set.playTogether(
-            colorStateAnimator(RecordContent.Pause, resources),
+            colorStateAnimator(RecordState.Paused, resources),
             recordStopButton.outAnimator(buttonTranslationY),
             playPauseButton.inAnimator(),
             resetButton.inAnimator(),
@@ -127,7 +138,7 @@ class RecordScreen : Fragment(R.layout.screen_record) {
     private fun ScreenRecordBinding.toIdleStateAnimator(): Animator {
         val set = AnimatorSet()
         set.playTogether(
-            colorStateAnimator(RecordContent.Idle, resources),
+            colorStateAnimator(RecordState.Idle, resources),
             recordStopButton.inAnimator(),
             playPauseButton.outAnimator(buttonTranslationY),
             resetButton.outAnimator(buttonTranslationY)

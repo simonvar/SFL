@@ -10,7 +10,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import io.github.simonvar.sfl.databinding.ScreenRecordBinding
 
 fun ScreenRecordBinding.colorStateAnimator(
-    state: RecordContent,
+    state: RecordState,
     resources: Resources
 ): Animator {
     val currentColor = (root.background as? ColorDrawable)?.color ?: 0

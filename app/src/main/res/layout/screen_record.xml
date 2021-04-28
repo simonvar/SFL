@@ -8,12 +8,14 @@
     tools:context=".MainActivity">
 
     <io.github.simonvar.sfl.widget.WaveView
+        android:id="@+id/waveform"
         android:layout_width="0dp"
         android:layout_height="240dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:background="@color/teal" />
 
     <io.github.simonvar.sfl.widget.CircleButton
         android:id="@+id/record_stop_button"

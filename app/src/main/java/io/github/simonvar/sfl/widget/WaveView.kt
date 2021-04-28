@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import io.github.simonvar.sfl.R
+import io.github.simonvar.sfl.dpAsPx
 
 class WaveView @JvmOverloads constructor(
     context: Context,
@@ -15,15 +16,32 @@ class WaveView @JvmOverloads constructor(
     defStyleRes: Int = 0
 ) : View(context, attrs, defStyleAttr, defStyleRes) {
 
-    val round = 100.dpAsPx()
+    companion object {
+        private val CORNER_RADIUS_PX = 100.dpAsPx()
+        private val LEVEL_WIDTH_PX = 4.dpAsPx()
+        private var MIN_LEVEL_MARGIN_PX = 2.dpAsPx()
 
-    val minLevelPx = 4.dpAsPx()
-    var maxLevelPx = 250.dpAsPx()
+        fun calculateParamsForWidth(width: Int): Params {
+            val levelWidth = MIN_LEVEL_MARGIN_PX + LEVEL_WIDTH_PX + MIN_LEVEL_MARGIN_PX
+            val count = width / levelWidth
+            return Params(count, MIN_LEVEL_MARGIN_PX)
+        }
+    }
 
-    var sizePx = 4.dpAsPx()
-    var gapPx = 2.dpAsPx()
+    class Params(
+        val count: Int,
+        val margin: Int
+    )
 
-    var levelsCount = 1
+    private var levels: List<Int> = emptyList()
+
+    var levelMarginPx = 0
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    private var levelMaxHeightPx = 0
 
     private val defaultPaint = Paint().apply {
         isAntiAlias = true
@@ -40,6 +58,11 @@ class WaveView @JvmOverloads constructor(
         initAttributes(context, attrs)
     }
 
+    fun setLevels(levels: List<Int>, withAnimation: Boolean = true) {
+        this.levels = levels
+        invalidate()
+    }
+
     private fun initAttributes(context: Context, attrs: AttributeSet?) {
         val values = context.obtainStyledAttributes(attrs, R.styleable.WaveView)
         values.recycle()
@@ -48,43 +71,31 @@ class WaveView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         val mid = height / 2
         var offsetX = 0
-        for (level in 0..levelsCount) {
-
-            offsetX += gapPx
+        for (level in levels) {
+            offsetX += levelMarginPx
 
             canvas.drawRoundRect(
                 offsetX.toFloat(),
-                (mid + sizePx / 2).toFloat(),
-                (offsetX + sizePx).toFloat(),
-                (mid - sizePx / 2).toFloat(),
-                round.toFloat(),
-                round.toFloat(),
+                (mid + level.percentAsPx()).toFloat(),
+                (offsetX + LEVEL_WIDTH_PX).toFloat(),
+                (mid - level.percentAsPx()).toFloat(),
+                CORNER_RADIUS_PX.toFloat(),
+                CORNER_RADIUS_PX.toFloat(),
                 defaultPaint
             )
 
-            offsetX += (sizePx + gapPx)
+            offsetX += (LEVEL_WIDTH_PX + levelMarginPx)
         }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val oneLevelSize = gapPx + sizePx + gapPx
-        val specSize = MeasureSpec.getSize(widthMeasureSpec)
-        levelsCount = specSize / oneLevelSize
+        val specSizeWidth = MeasureSpec.getSize(widthMeasureSpec)
+        val specSizeHeight = MeasureSpec.getSize(heightMeasureSpec)
+        levelMaxHeightPx = specSizeHeight / 2
     }
 
-    private fun Float.percentAsPx(): Int {
-        return (maxLevelPx * this).toInt() + minLevelPx
+    private fun Int.percentAsPx(): Int {
+        return levelMaxHeightPx / 100 * this + LEVEL_WIDTH_PX / 2
     }
-
-    private fun Int.dpAsPx(): Int {
-        return this * resources.displayMetrics.density.toInt()
-    }
-
-    interface Adapter {
-        fun append(level: Int)
-    }
-
-    interface OnLevelsCountChanged : (Int) -> Unit
-
 }

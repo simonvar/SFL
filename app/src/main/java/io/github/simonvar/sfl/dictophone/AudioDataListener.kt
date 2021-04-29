@@ -1,4 +1,4 @@
-package io.github.simonvar.sfl.record
+package io.github.simonvar.sfl.dictophone
 
 interface AudioDataListener {
     fun onAudioDataReceived(data: ShortArray)

@@ -1,4 +1,4 @@
-package io.github.simonvar.sfl.record
+package io.github.simonvar.sfl.dictophone
 
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -6,11 +6,12 @@ import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.util.Log
 
-class DictaphoneFeature(private val listener: AudioDataListener){
+
+class DictaphoneFeature(private val listener: AudioDataListener) {
 
     companion object {
         private const val LOG_TAG = "RecordFeature"
-        private const val SAMPLE_RATE = 44100
+        private const val SAMPLE_RATE = 8000
     }
 
     private var shouldContinue = true
@@ -31,7 +32,7 @@ class DictaphoneFeature(private val listener: AudioDataListener){
             bufferSize = SAMPLE_RATE * 2
         }
 
-        val audioBuffer = ShortArray(bufferSize / 2)
+        val audioBuffer = ShortArray(bufferSize)
 
         val record = AudioRecord(
             MediaRecorder.AudioSource.DEFAULT,

@@ -3,6 +3,7 @@ package io.github.simonvar.sfl.ui
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -86,6 +87,7 @@ class RecordScreen : Fragment(R.layout.screen_record) {
 
         lifecycleScope.launchWhenCreated {
             vm.levels.collect {
+                Log.d("Screen", it.joinToString())
                 binding.waveform.setLevels(it)
             }
         }

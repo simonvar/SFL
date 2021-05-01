@@ -3,7 +3,6 @@ package io.github.simonvar.sfl.ui
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.simonvar.sfl.dictophone.AudioDataListener
 import io.github.simonvar.sfl.dictophone.DictaphoneFeature
 import io.github.simonvar.sfl.dictophone.SamplingUtils
 import kotlinx.coroutines.Dispatchers
@@ -13,9 +12,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-class RecordViewModel : ViewModel(), AudioDataListener {
+class RecordViewModel : ViewModel() {
 
-    private val dictaphone = DictaphoneFeature(this)
+    private val dictaphone = DictaphoneFeature()
 
     private val _state = MutableStateFlow<RecordState>(RecordState.Idle)
     val state: Flow<RecordState> = _state.asStateFlow()
@@ -63,12 +62,11 @@ class RecordViewModel : ViewModel(), AudioDataListener {
         dictaphone.reset()
     }
 
-    override fun onAudioDataReceived(data: ShortArray) {
+    private fun onAudioDataReceived(data: ShortArray) {
         viewModelScope.launch(Dispatchers.IO) {
 
             val extremes = SamplingUtils.getExtremes(data, data.size / 100)
             val heights = extremes.map { it[0] - it[1] }
-//            Log.d("Wave", heights.joinToString())
 
             val levels = heights
                 .map {

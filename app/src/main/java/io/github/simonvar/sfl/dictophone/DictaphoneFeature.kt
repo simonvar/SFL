@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlin.math.min
 
-class DictaphoneFeature(private val listener: AudioDataListener) {
+class DictaphoneFeature {
 
     companion object {
         private const val LOG_TAG = "RecordFeature"

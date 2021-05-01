@@ -1,4 +1,4 @@
-package io.github.simonvar.sfl.dictophone
+package io.github.simonvar.sfl.dictaphone
 
 import android.media.*
 import android.media.AudioRecord.RECORDSTATE_RECORDING
@@ -11,7 +11,7 @@ import kotlin.math.min
 class DictaphoneFeature {
 
     companion object {
-        private const val LOG_TAG = "RecordFeature"
+        private const val LOG_TAG = "DictaphoneFeature"
         private const val SAMPLE_RATE = 8000
     }
 

@@ -2,8 +2,8 @@ package io.github.simonvar.sfl.ui.dictaphone
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
-import io.github.simonvar.sfl.dictophone.DictaphoneFeature
-import io.github.simonvar.sfl.dictophone.SamplingUtils
+import io.github.simonvar.sfl.dictaphone.DictaphoneFeature
+import io.github.simonvar.sfl.dictaphone.SamplingUtils
 import io.github.simonvar.sfl.ui.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

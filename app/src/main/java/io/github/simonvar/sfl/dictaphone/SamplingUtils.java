@@ -1,4 +1,4 @@
-package io.github.simonvar.sfl.dictophone;
+package io.github.simonvar.sfl.dictaphone;
 
 import java.util.Arrays;
 

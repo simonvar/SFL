@@ -9,18 +9,20 @@ import io.github.simonvar.sfl.dictophone.SamplingUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class RecordViewModel : ViewModel(), AudioDataListener {
 
+
     private val recordFeature = DictaphoneFeature(this)
 
     private val _state = MutableStateFlow<RecordState>(RecordState.Idle)
-    val state: Flow<RecordState> = _state
+    val state: Flow<RecordState> = _state.asStateFlow()
 
     private val _levels = MutableStateFlow<List<Int>>(emptyList())
-    val levels: Flow<List<Int>> = _levels
+    val levels: Flow<List<Int>> = _levels.asStateFlow()
 
     private var levelsCount = 0
     private val levelsHistory = mutableListOf<Int>()
@@ -58,7 +60,7 @@ class RecordViewModel : ViewModel(), AudioDataListener {
     override fun onAudioDataReceived(data: ShortArray) {
         viewModelScope.launch(Dispatchers.IO) {
 
-            val extremes = SamplingUtils.getExtremes(data, data.size / 20)
+            val extremes = SamplingUtils.getExtremes(data, data.size / 100)
             val heights = extremes.map { it[0] - it[1] }
 //            Log.d("Wave", heights.joinToString())
 
@@ -75,8 +77,7 @@ class RecordViewModel : ViewModel(), AudioDataListener {
             Log.d("Levels", levels.joinToString())
             Log.d("Levels History", levelsHistory.joinToString())
 
-
-            val l = levelsHistory.toList()
+            val l = levelsHistory.toList().asReversed()
             _levels.emit(l)
         }
     }

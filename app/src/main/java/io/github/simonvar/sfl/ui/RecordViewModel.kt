@@ -10,13 +10,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 class RecordViewModel : ViewModel(), AudioDataListener {
 
-
-    private val recordFeature = DictaphoneFeature(this)
+    private val dictaphone = DictaphoneFeature(this)
 
     private val _state = MutableStateFlow<RecordState>(RecordState.Idle)
     val state: Flow<RecordState> = _state.asStateFlow()
@@ -26,6 +25,10 @@ class RecordViewModel : ViewModel(), AudioDataListener {
 
     private var levelsCount = 0
     private val levelsHistory = mutableListOf<Int>()
+
+    init {
+        dictaphone.init()
+    }
 
     fun onChangeLevelsCount(value: Int) = viewModelScope.launch(Dispatchers.IO) {
         levelsCount = value
@@ -37,24 +40,27 @@ class RecordViewModel : ViewModel(), AudioDataListener {
 
     fun onRecordClick() = viewModelScope.launch(Dispatchers.IO) {
         _state.emit(RecordState.Recording)
-        recordFeature.record()
+        dictaphone.record().collect { onAudioDataReceived(it) }
     }
 
     fun onStopClick() = viewModelScope.launch(Dispatchers.IO) {
         _state.emit(RecordState.Paused)
-        recordFeature.stop()
+        dictaphone.stop()
     }
 
     fun onPlayClick() = viewModelScope.launch(Dispatchers.IO) {
         _state.emit(RecordState.Playing)
+        dictaphone.play()
     }
 
     fun onPauseClick() = viewModelScope.launch(Dispatchers.IO) {
         _state.emit(RecordState.Paused)
+        dictaphone.pause()
     }
 
     fun onResetClick() = viewModelScope.launch(Dispatchers.IO) {
         _state.emit(RecordState.Idle)
+        dictaphone.reset()
     }
 
     override fun onAudioDataReceived(data: ShortArray) {
@@ -80,5 +86,10 @@ class RecordViewModel : ViewModel(), AudioDataListener {
             val l = levelsHistory.toList().asReversed()
             _levels.emit(l)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        dictaphone.release()
     }
 }

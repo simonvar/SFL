@@ -1,26 +1,21 @@
-package io.github.simonvar.sfl.ui
+package io.github.simonvar.sfl.ui.dictaphone
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.simonvar.sfl.dictophone.DictaphoneFeature
 import io.github.simonvar.sfl.dictophone.SamplingUtils
+import io.github.simonvar.sfl.ui.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-class RecordViewModel : ViewModel() {
+class DictaphoneViewModel : BaseViewModel() {
 
     private val dictaphone = DictaphoneFeature()
 
-    private val _state = MutableStateFlow<RecordState>(RecordState.Idle)
-    val state: Flow<RecordState> = _state.asStateFlow()
-
-    private val _levels = MutableStateFlow<List<Int>>(emptyList())
-    val levels: Flow<List<Int>> = _levels.asStateFlow()
+    val state = MutableStateFlow<DictaphoneState>(DictaphoneState.Idle)
+    val levels = MutableStateFlow<List<Int>>(emptyList())
 
     private var levelsCount = 0
     private val levelsHistory = mutableListOf<Int>()
@@ -29,42 +24,41 @@ class RecordViewModel : ViewModel() {
         dictaphone.init()
     }
 
-    fun onChangeLevelsCount(value: Int) = viewModelScope.launch(Dispatchers.IO) {
+    fun onChangeLevelsCount(value: Int) = launch {
         levelsCount = value
         for (i in 0 until levelsCount) {
             levelsHistory.add(0)
         }
-        _levels.emit(levelsHistory)
+        levels.emit(levelsHistory)
     }
 
-    fun onRecordClick() = viewModelScope.launch(Dispatchers.IO) {
-        _state.emit(RecordState.Recording)
+    fun onRecordClick() = launch {
+        state.emit(DictaphoneState.Recording)
         dictaphone.record().collect { onAudioDataReceived(it) }
     }
 
-    fun onStopClick() = viewModelScope.launch(Dispatchers.IO) {
-        _state.emit(RecordState.Paused)
+    fun onStopClick() = launch {
+        state.emit(DictaphoneState.Paused)
         dictaphone.stop()
     }
 
-    fun onPlayClick() = viewModelScope.launch(Dispatchers.IO) {
-        _state.emit(RecordState.Playing)
+    fun onPlayClick() = launch {
+        state.emit(DictaphoneState.Playing)
         dictaphone.play()
     }
 
-    fun onPauseClick() = viewModelScope.launch(Dispatchers.IO) {
-        _state.emit(RecordState.Paused)
+    fun onPauseClick() = launch {
+        state.emit(DictaphoneState.Paused)
         dictaphone.pause()
     }
 
     fun onResetClick() = viewModelScope.launch(Dispatchers.IO) {
-        _state.emit(RecordState.Idle)
+        state.emit(DictaphoneState.Idle)
         dictaphone.reset()
     }
 
     private fun onAudioDataReceived(data: ShortArray) {
-        viewModelScope.launch(Dispatchers.IO) {
-
+        launch {
             val extremes = SamplingUtils.getExtremes(data, data.size / 100)
             val heights = extremes.map { it[0] - it[1] }
 
@@ -81,8 +75,7 @@ class RecordViewModel : ViewModel() {
             Log.d("Levels", levels.joinToString())
             Log.d("Levels History", levelsHistory.joinToString())
 
-            val l = levelsHistory.toList().asReversed()
-            _levels.emit(l)
+            this.levels.emit(levelsHistory.toList().asReversed())
         }
     }
 

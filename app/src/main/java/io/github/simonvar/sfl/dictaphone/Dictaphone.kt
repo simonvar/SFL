@@ -34,7 +34,7 @@ class Dictaphone {
             }
     }
 
-    fun stop() {
+    suspend fun stop() {
         recordFeature.stop()
     }
 
@@ -75,6 +75,7 @@ class Dictaphone {
     fun reset() {
         recordedBuffer.clear()
         recordFeature.reset()
+        playbackFeature.reset()
         playbackFeature.reset()
     }
 

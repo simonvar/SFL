@@ -4,7 +4,6 @@ import android.Manifest
 import android.animation.ValueAnimator
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.animation.LinearInterpolator
 import androidx.activity.result.contract.ActivityResultContracts
@@ -123,6 +122,8 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
     }
 
     private fun moveToIdleState() = with(binding) {
+        playingAnimator?.pause()
+        playingAnimator = null
         recordStopButton.jumpToState(CircleButton.FIRST)
         animatorFactory.moveToIdleStateAnimator().start()
     }
@@ -135,7 +136,6 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
     private fun moveToReadyForPlay(duration: Long) = with(binding) {
         playPauseButton.moveToState(CircleButton.FIRST)
         animatorFactory.moveToPauseStateAnimator().start()
-        Log.d("Screen", "duration: $duration")
         playingAnimator = waveformPlayingAnimator(duration)
         playingAnimator?.start()
         playingAnimator?.pause()

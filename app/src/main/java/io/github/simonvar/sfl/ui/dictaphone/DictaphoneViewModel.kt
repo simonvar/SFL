@@ -71,6 +71,7 @@ class DictaphoneViewModel : BaseViewModel() {
     }
 
     fun onResetClick() = launch {
+        audioDuration = 0
         dictaphoneState.emit(DictaphoneState.Idle)
         dictaphone.reset()
         levelsHistory.clear()

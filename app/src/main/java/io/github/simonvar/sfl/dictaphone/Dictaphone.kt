@@ -1,6 +1,5 @@
 package io.github.simonvar.sfl.dictaphone
 
-import android.util.Log
 import io.github.simonvar.sfl.dictaphone.audioplayback.AudioPlaybackFeatureImpl
 import io.github.simonvar.sfl.dictaphone.audiorecord.AudioRecordFeatureImpl
 import kotlinx.coroutines.flow.Flow
@@ -27,9 +26,8 @@ class Dictaphone {
             .map { values ->
                 recordedBuffer.addAll(values.toList())
 
-                val levels = SamplingUtils
-                    .getExtremes(values, values.size / 80)
-                    .map { it[0] - it[1] }
+                val levels = extremes(values, values.size / 80)
+                    .map { it.max - it.min }
                     .map { (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt() }
 
                 LevelsData(levels)
@@ -43,16 +41,14 @@ class Dictaphone {
     fun setupPlay(levelsCount: Int): LevelsData {
         val data = playbackFeature.setup(recordedBuffer.toShortArray())
 
-        val levels = SamplingUtils
-            .getExtremes(data.buffer, levelsCount)
-            .map { it[0] - it[1] }
+        val levels = extremes(data.buffer, levelsCount)
+            .map { it.max - it.min }
             .map { (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt() }
 
         val playedBuffer = data.buffer.copyOfRange(0, data.offset)
 
-        val played = levels.size - SamplingUtils
-            .getExtremes(playedBuffer, levelsCount)
-            .map { it[0] - it[1] }
+        val played = levels.size - extremes(playedBuffer, levelsCount)
+            .map { it.max - it.min }
             .count()
 
         return LevelsData(levels, played)
@@ -61,14 +57,13 @@ class Dictaphone {
     fun play(levelsCount: Int): Flow<LevelsData> {
         return playbackFeature.play()
             .map { data ->
-                val levels = SamplingUtils
-                    .getExtremes(data.buffer, levelsCount)
-                    .map { it[0] - it[1] }
+                val levels = extremes(data.buffer, levelsCount)
+                    .map { it.max - it.min }
                     .map { (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt() }
 
-                val played = (levels.count() * (data.offset.toFloat() / data.buffer.count())).toInt()
+                val offsetRatio = data.offset.toFloat() / data.buffer.count()
+                val played = (levels.count() * offsetRatio).toInt()
 
-                Log.d("Dict", "${levels.count()} * ${data.offset} / ${data.buffer.count()} = $played")
                 LevelsData(levels, played)
             }
     }

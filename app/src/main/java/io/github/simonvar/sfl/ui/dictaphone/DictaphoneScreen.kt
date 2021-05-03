@@ -8,7 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.LifecycleOwner
 import io.github.simonvar.sfl.R
 import io.github.simonvar.sfl.databinding.ScreenDictaphoneBinding
 import io.github.simonvar.sfl.ui.base.BaseScreen
@@ -98,7 +97,7 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
     private fun initVM(params: WaveView.Params) {
         vm.onChangeLevelsCount(params.count)
         vm.state bind this::handleRecordState
-        vm.levels bind binding.waveform::setLevels
+        vm.data bind binding.waveform::setData
     }
 
     private fun handleRecordState(state: DictaphoneState) {

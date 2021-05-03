@@ -1,22 +1,21 @@
 package io.github.simonvar.sfl.ui.dictaphone
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import io.github.simonvar.sfl.dictaphone.DictaphoneFeature
 import io.github.simonvar.sfl.dictaphone.SamplingUtils
 import io.github.simonvar.sfl.ui.base.BaseViewModel
+import io.github.simonvar.sfl.widget.WaveView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlin.math.pow
 
 class DictaphoneViewModel : BaseViewModel() {
 
     private val dictaphone = DictaphoneFeature()
 
     val state = MutableStateFlow<DictaphoneState>(DictaphoneState.Idle)
-    val levels = MutableStateFlow<List<Int>>(emptyList())
+    val data = MutableStateFlow(WaveView.Data())
 
     private var levelsCount = 0
     private val levelsHistory = mutableListOf<Int>()
@@ -26,7 +25,10 @@ class DictaphoneViewModel : BaseViewModel() {
         for (i in 0 until levelsCount) {
             levelsHistory.add(0)
         }
-        levels.emit(levelsHistory)
+
+        data.emit(
+            WaveView.Data(levelsHistory.toList())
+        )
     }
 
     fun onPermissionGranted() {
@@ -35,7 +37,7 @@ class DictaphoneViewModel : BaseViewModel() {
 
     fun onRecordClick() = launch {
         state.emit(DictaphoneState.Recording)
-        dictaphone.record().collect { onAudioDataReceived(it) }
+        dictaphone.record().collect { proceedRecordedData(it) }
     }
 
     fun onStopClick() = launch {
@@ -56,22 +58,34 @@ class DictaphoneViewModel : BaseViewModel() {
     fun onResetClick() = viewModelScope.launch(Dispatchers.IO) {
         state.emit(DictaphoneState.Idle)
         dictaphone.reset()
+        levelsHistory.clear()
+        for (i in 0 until levelsCount) {
+            levelsHistory.add(0)
+        }
+        data.emit(
+            WaveView.Data(
+                levels = levelsHistory.toList(),
+                withAnimation = true
+            )
+        )
     }
 
-    private fun onAudioDataReceived(data: ShortArray) {
+    private fun proceedRecordedData(values: ShortArray) {
         launch {
             SamplingUtils
-                .getExtremes(data, data.size / 80)
+                .getExtremes(values, values.size / 80)
                 .map { it[0] - it[1] }
                 .map {
                     (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt()
                 }
                 .forEach {
-                    levelsHistory.add(0, it)
-                    levelsHistory.removeLast()
+                    levelsHistory.add(levelsHistory.size, it)
+                    levelsHistory.removeFirst()
                 }
 
-            levels.emit(levelsHistory.toList().asReversed())
+            data.emit(
+                WaveView.Data(levelsHistory.toList())
+            )
         }
     }
 

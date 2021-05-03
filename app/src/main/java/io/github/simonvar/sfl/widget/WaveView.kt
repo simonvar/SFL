@@ -1,11 +1,13 @@
 package io.github.simonvar.sfl.widget
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.AccelerateInterpolator
 import io.github.simonvar.sfl.R
 import io.github.simonvar.sfl.dpAsPx
 
@@ -28,12 +30,18 @@ class WaveView @JvmOverloads constructor(
         }
     }
 
-    class Params(
+    data class Data(
+        val levels: List<Int> = emptyList(),
+        val coloredToIndex: Int = levels.lastIndex,
+        val withAnimation: Boolean = false
+    )
+
+    data class Params(
         val count: Int,
         val margin: Int
     )
 
-    private var levels: List<Int> = emptyList()
+    private var data = Data(emptyList())
 
     var levelMarginPx = 0
         set(value) {
@@ -54,13 +62,38 @@ class WaveView @JvmOverloads constructor(
         alpha = 52
     }
 
+    private val animator = ValueAnimator.ofFloat(0F, 1F)
+        .apply {
+            duration = 150L
+            interpolator = AccelerateInterpolator()
+        }
+
     init {
         initAttributes(context, attrs)
     }
 
-    fun setLevels(levels: List<Int>, withAnimation: Boolean = true) {
-        this.levels = levels
-        invalidate()
+    fun setData(data: Data) {
+        animator.pause()
+
+        if (data.withAnimation) {
+
+            val prevLevels = this.data.levels
+            val newLevels = data.levels
+
+            animator.addUpdateListener {
+                val ratio = it.animatedValue as Float
+                val tempLevels = prevLevels.mapIndexed { index, value ->
+                    val diff = value - (newLevels.getOrNull(index) ?: 0)
+                    (value - (diff * ratio)).toInt()
+                }
+                this.data = Data(tempLevels)
+                invalidate()
+            }
+            animator.start()
+        } else {
+            this.data = data
+            invalidate()
+        }
     }
 
     private fun initAttributes(context: Context, attrs: AttributeSet?) {
@@ -71,18 +104,18 @@ class WaveView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         val mid = height / 2
         var offsetX = 0
-        for (level in levels) {
+        data.levels.forEachIndexed { index, level ->
             offsetX += levelMarginPx
 
-            canvas.drawRoundRect(
-                offsetX.toFloat(),
-                (mid + level.percentAsPx()).toFloat(),
-                (offsetX + LEVEL_WIDTH_PX).toFloat(),
-                (mid - level.percentAsPx()).toFloat(),
-                CORNER_RADIUS_PX.toFloat(),
-                CORNER_RADIUS_PX.toFloat(),
-                defaultPaint
-            )
+            val paint = if (index <= data.coloredToIndex) defaultPaint else alphaPaint
+            val left = offsetX.toFloat()
+            val top = (mid + level.percentAsPx()).toFloat()
+            val right = (offsetX + LEVEL_WIDTH_PX).toFloat()
+            val bottom = (mid - level.percentAsPx()).toFloat()
+            val rx = CORNER_RADIUS_PX.toFloat()
+            val ry = CORNER_RADIUS_PX.toFloat()
+
+            canvas.drawRoundRect(left, top, right, bottom, rx, ry, paint)
 
             offsetX += (LEVEL_WIDTH_PX + levelMarginPx)
         }

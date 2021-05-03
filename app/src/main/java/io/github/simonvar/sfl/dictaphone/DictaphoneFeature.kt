@@ -55,11 +55,10 @@ class DictaphoneFeature {
             AudioTrack.MODE_STREAM
         )
 
-        if (record.state != AudioTrack.STATE_INITIALIZED) {
+        if (track.state != AudioTrack.STATE_INITIALIZED) {
             Log.e(LOG_TAG, "Audio Track can't initialize!")
             throw IllegalStateException("Audio Track can't initialize!")
         }
-
     }
 
     fun record(): Flow<ShortArray> {

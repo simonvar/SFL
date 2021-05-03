@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlin.math.pow
 
 class DictaphoneViewModel : BaseViewModel() {
 
@@ -20,16 +21,16 @@ class DictaphoneViewModel : BaseViewModel() {
     private var levelsCount = 0
     private val levelsHistory = mutableListOf<Int>()
 
-    init {
-        dictaphone.init()
-    }
-
     fun onChangeLevelsCount(value: Int) = launch {
         levelsCount = value
         for (i in 0 until levelsCount) {
             levelsHistory.add(0)
         }
         levels.emit(levelsHistory)
+    }
+
+    fun onPermissionGranted() {
+        dictaphone.init()
     }
 
     fun onRecordClick() = launch {
@@ -59,23 +60,18 @@ class DictaphoneViewModel : BaseViewModel() {
 
     private fun onAudioDataReceived(data: ShortArray) {
         launch {
-            val extremes = SamplingUtils.getExtremes(data, data.size / 100)
-            val heights = extremes.map { it[0] - it[1] }
-
-            val levels = heights
+            SamplingUtils
+                .getExtremes(data, data.size / 80)
+                .map { it[0] - it[1] }
                 .map {
                     (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt()
                 }
+                .forEach {
+                    levelsHistory.add(0, it)
+                    levelsHistory.removeLast()
+                }
 
-            for (level in levels) {
-                levelsHistory.add(0, level)
-                levelsHistory.removeLast()
-            }
-
-            Log.d("Levels", levels.joinToString())
-            Log.d("Levels History", levelsHistory.joinToString())
-
-            this.levels.emit(levelsHistory.toList().asReversed())
+            levels.emit(levelsHistory.toList().asReversed())
         }
     }
 

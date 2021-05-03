@@ -1,7 +1,11 @@
 package io.github.simonvar.sfl.ui.dictaphone
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
@@ -20,7 +24,18 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
     private val vm: DictaphoneViewModel by viewModels()
     private var buttonTranslationY = 0F
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            vm.onPermissionGranted()
+            vm.onRecordClick()
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        if (isRecordPermissionGranted()) vm.onPermissionGranted()
+
         binding = ScreenDictaphoneBinding.bind(view)
         with(binding) {
             root.doOnLayout {
@@ -46,8 +61,16 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
         recordStopButton.duration = ANIM_DURATION
         recordStopButton.setOnClickListener {
             when (recordStopButton.state) {
-                CircleButton.FIRST -> vm.onRecordClick()
-                CircleButton.SECOND -> vm.onStopClick()
+                CircleButton.FIRST -> {
+                    if (isRecordPermissionGranted()) {
+                        vm.onRecordClick()
+                    } else {
+                        requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                }
+                CircleButton.SECOND -> {
+                    vm.onStopClick()
+                }
             }
         }
 
@@ -106,5 +129,15 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
         playPauseButton.moveToState(CircleButton.SECOND)
     }
 
+    private fun isRecordPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+    }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        requestPermissionLauncher.unregister()
+    }
 }

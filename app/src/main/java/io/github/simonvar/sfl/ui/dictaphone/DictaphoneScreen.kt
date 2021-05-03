@@ -1,9 +1,12 @@
 package io.github.simonvar.sfl.ui.dictaphone
 
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.view.animation.LinearInterpolator
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
@@ -22,6 +25,7 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
 
     private val vm: DictaphoneViewModel by viewModels()
     private var buttonTranslationY = 0F
+    private var playingAnimator: ValueAnimator? = null
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -39,7 +43,11 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
         with(binding) {
             root.doOnLayout {
                 buttonTranslationY = it.height - recordStopButton.y
-                animatorFactory = DictaphoneAnimatorFactory(binding, resources, buttonTranslationY)
+                animatorFactory = DictaphoneAnimatorFactory(
+                    binding,
+                    requireContext(),
+                    buttonTranslationY
+                )
 
                 playPauseButton.translationY = buttonTranslationY
                 resetButton.translationY = buttonTranslationY
@@ -87,7 +95,7 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
     }
 
     private fun initColors() = with(binding) {
-        val initColor = resources.getColor(R.color.blue)
+        val initColor = DictaphoneState.Idle.color(requireContext())
         binding.root.setBackgroundColor(initColor)
         binding.recordStopButton.tint = initColor
         binding.playPauseButton.tint = initColor
@@ -96,17 +104,22 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
 
     private fun initVM(params: WaveView.Params) {
         vm.onChangeLevelsCount(params.count)
-        vm.dictaphoneState bind this::handleRecordState
+        vm.dictaphoneState bind this::updateDictaphoneState
         vm.waveformState bind binding.waveform::setData
     }
 
-    private fun handleRecordState(state: DictaphoneState) {
+    private fun updateDictaphoneState(state: DictaphoneState) {
         when (state) {
-            DictaphoneState.Idle -> moveToIdleState()
-            DictaphoneState.Recording -> moveToRecordState()
-            DictaphoneState.Paused -> moveToPauseState()
-            DictaphoneState.Playing -> moveToPlayState()
+            is DictaphoneState.Idle -> moveToIdleState()
+            is DictaphoneState.Recording -> moveToRecordState()
+            is DictaphoneState.ReadyForPlay -> moveToReadyForPlay(state.duration)
+            is DictaphoneState.Paused -> moveToPausedState()
+            is DictaphoneState.Playing -> moveToPlayingState()
         }
+    }
+
+    private fun updatePlayingState(value: Float) {
+        binding.waveform.setPlayback(value)
     }
 
     private fun moveToIdleState() = with(binding) {
@@ -119,12 +132,22 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
         animatorFactory.moveToRecordStateAnimator().start()
     }
 
-    private fun moveToPauseState() = with(binding) {
+    private fun moveToReadyForPlay(duration: Long) = with(binding) {
         playPauseButton.moveToState(CircleButton.FIRST)
         animatorFactory.moveToPauseStateAnimator().start()
+        Log.d("Screen", "duration: $duration")
+        playingAnimator = waveformPlayingAnimator(duration)
+        playingAnimator?.start()
+        playingAnimator?.pause()
     }
 
-    private fun moveToPlayState() = with(binding) {
+    private fun moveToPausedState() = with(binding) {
+        playingAnimator?.pause()
+        playPauseButton.moveToState(CircleButton.FIRST)
+    }
+
+    private fun moveToPlayingState() = with(binding) {
+        playingAnimator?.resume()
         playPauseButton.moveToState(CircleButton.SECOND)
     }
 
@@ -133,6 +156,19 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
             requireContext(),
             Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun waveformPlayingAnimator(duration: Long): ValueAnimator {
+        return ValueAnimator.ofFloat(0F, 1F)
+            .apply {
+                this.duration = duration
+                interpolator = LinearInterpolator()
+                addUpdateListener {
+                    val value = it.animatedValue as Float
+                    updatePlayingState(value)
+                    if (value >= 1) vm.onPlayingEnd()
+                }
+            }
     }
 
     override fun onDestroy() {

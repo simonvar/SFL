@@ -4,7 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
-import android.content.res.Resources
+import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -12,7 +12,7 @@ import io.github.simonvar.sfl.databinding.ScreenDictaphoneBinding
 
 class DictaphoneAnimatorFactory(
     private val binding: ScreenDictaphoneBinding,
-    private val resources: Resources,
+    private val context: Context,
     private val buttonTranslationY: Float
 ) {
 
@@ -21,13 +21,13 @@ class DictaphoneAnimatorFactory(
     }
 
     fun moveToRecordStateAnimator(): Animator = with(binding) {
-        return colorStateAnimator(DictaphoneState.Recording, resources)
+        return colorStateAnimator(context, DictaphoneState.Recording)
     }
 
     fun moveToPauseStateAnimator(): Animator = with(binding) {
         val set = AnimatorSet()
         set.playTogether(
-            colorStateAnimator(DictaphoneState.Paused, resources),
+            colorStateAnimator(context, DictaphoneState.Paused),
             recordStopButton.outAnimator(buttonTranslationY),
             playPauseButton.inAnimator(),
             resetButton.inAnimator(),
@@ -39,7 +39,7 @@ class DictaphoneAnimatorFactory(
     fun moveToIdleStateAnimator(): Animator = with(binding) {
         val set = AnimatorSet()
         set.playTogether(
-            colorStateAnimator(DictaphoneState.Idle, resources),
+            colorStateAnimator(context, DictaphoneState.Idle),
             recordStopButton.inAnimator(),
             playPauseButton.outAnimator(buttonTranslationY),
             resetButton.outAnimator(buttonTranslationY)
@@ -49,12 +49,12 @@ class DictaphoneAnimatorFactory(
     }
 
     private fun ScreenDictaphoneBinding.colorStateAnimator(
-        state: DictaphoneState,
-        resources: Resources
+        context: Context,
+        state: DictaphoneState
     ): Animator {
         val currentColor = (root.background as? ColorDrawable)?.color ?: 0
         return ValueAnimator
-            .ofArgb(currentColor, state.color(resources))
+            .ofArgb(currentColor, state.color(context))
             .apply {
                 addUpdateListener {
                     val color = it.animatedValue as Int

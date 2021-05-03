@@ -15,6 +15,7 @@ class DictaphoneViewModel : BaseViewModel() {
 
     private var levelsCount = 0
     private val levelsHistory = mutableListOf<Int>()
+    private var audioDuration = 0L
 
     fun onChangeLevelsCount(value: Int) = launch {
         updateLevelsCount(value)
@@ -38,31 +39,30 @@ class DictaphoneViewModel : BaseViewModel() {
     }
 
     fun onStopClick() = launch {
-        dictaphoneState.emit(DictaphoneState.Paused)
         dictaphone.stop()
+        val data = dictaphone.setupPlay(levelsCount)
 
-        val levels = dictaphone.setupPlay(levelsCount)
+        audioDuration = data.duration.toLong() * 1000
+        dictaphoneState.emit(DictaphoneState.ReadyForPlay(audioDuration))
+
         levelsHistory.clear()
-        levelsHistory.addAll(levels.values)
+        levelsHistory.addAll(data.values)
 
         updateWaveform(withAnimation = true)
     }
 
     fun onPlayClick() = launch {
         dictaphoneState.emit(DictaphoneState.Playing)
-        dictaphone.play(levelsCount).collect { levels ->
-            if (levels.values.count() == levels.played) {
-                dictaphoneState.emit(DictaphoneState.Paused)
-                dictaphone.resetPlayback()
-            } else {
-                levelsHistory.clear()
-                levelsHistory.addAll(levels.values)
-            }
-            updateWaveform(
-                coloredTo = levels.played,
-                withAnimation = false
-            )
+        dictaphone.play(levelsCount).collect { data ->
+            levelsHistory.clear()
+            levelsHistory.addAll(data.values)
+            updateWaveform(withAnimation = false)
         }
+    }
+
+    fun onPlayingEnd() = launch {
+        dictaphoneState.emit(DictaphoneState.ReadyForPlay(audioDuration))
+        dictaphone.resetPlayback()
     }
 
     fun onPauseClick() = launch {
@@ -89,14 +89,10 @@ class DictaphoneViewModel : BaseViewModel() {
         updateWaveform(withAnimation = withAnimation)
     }
 
-    private suspend fun updateWaveform(
-        coloredTo: Int = levelsCount,
-        withAnimation: Boolean = false
-    ) {
+    private suspend fun updateWaveform(withAnimation: Boolean = false) {
         waveformState.emit(
             WaveView.Data(
                 levels = levelsHistory.toList(),
-                coloredToIndex = coloredTo,
                 withAnimation = withAnimation
             )
         )

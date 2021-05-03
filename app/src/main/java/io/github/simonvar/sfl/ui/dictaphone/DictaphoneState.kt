@@ -1,20 +1,23 @@
 package io.github.simonvar.sfl.ui.dictaphone
 
-import android.content.res.Resources
+import android.content.Context
+import androidx.core.content.ContextCompat
 import io.github.simonvar.sfl.R
 
 sealed class DictaphoneState {
     object Idle : DictaphoneState()
     object Recording : DictaphoneState()
+    data class ReadyForPlay(val duration: Long) : DictaphoneState()
     object Paused : DictaphoneState()
     object Playing : DictaphoneState()
 }
 
-fun DictaphoneState.color(resources: Resources): Int {
+fun DictaphoneState.color(context: Context): Int {
     return when (this) {
-        DictaphoneState.Idle -> resources.getColor(R.color.blue)
-        DictaphoneState.Recording -> resources.getColor(R.color.red)
-        DictaphoneState.Playing -> resources.getColor(R.color.teal)
-        DictaphoneState.Paused -> resources.getColor(R.color.teal)
+        is DictaphoneState.Idle -> ContextCompat.getColor(context, R.color.blue)
+        is DictaphoneState.Recording -> ContextCompat.getColor(context, R.color.red)
+        is DictaphoneState.ReadyForPlay -> ContextCompat.getColor(context, R.color.teal)
+        is DictaphoneState.Playing -> ContextCompat.getColor(context, R.color.teal)
+        is DictaphoneState.Paused -> ContextCompat.getColor(context, R.color.teal)
     }
 }

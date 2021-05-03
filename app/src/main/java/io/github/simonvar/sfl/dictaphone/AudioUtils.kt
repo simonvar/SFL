@@ -3,8 +3,8 @@ package io.github.simonvar.sfl.dictaphone
 import kotlin.math.max
 import kotlin.math.min
 
-fun calculateAudioLength(samplesCount: Int, sampleRate: Int, channelCount: Int): Int {
-    return samplesCount / channelCount * 1000 / sampleRate
+fun ShortArray.audioLength(sampleRate: Int): Float {
+    return size / sampleRate.toFloat()
 }
 
 fun extremes(data: ShortArray, sampleSize: Int): List<Extreme> {

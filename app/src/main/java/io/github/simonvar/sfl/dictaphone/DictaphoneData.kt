@@ -1,6 +1,6 @@
 package io.github.simonvar.sfl.dictaphone
 
-data class LevelsData(
+data class DictaphoneData(
     val values: List<Int>,
-    val played: Int = 0,
+    val duration: Float
 )

@@ -6,10 +6,12 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import io.github.simonvar.sfl.R
 import io.github.simonvar.sfl.dpAsPx
+import kotlin.math.floor
 
 class WaveView @JvmOverloads constructor(
     context: Context,
@@ -32,7 +34,6 @@ class WaveView @JvmOverloads constructor(
 
     data class Data(
         val levels: List<Int> = emptyList(),
-        val coloredToIndex: Int = levels.lastIndex,
         val withAnimation: Boolean = false
     )
 
@@ -42,6 +43,7 @@ class WaveView @JvmOverloads constructor(
     )
 
     private var data = Data(emptyList())
+    private var alphaPaintFromIndex = 0
 
     var levelMarginPx = 0
         set(value) {
@@ -73,10 +75,10 @@ class WaveView @JvmOverloads constructor(
     }
 
     fun setData(data: Data) {
+        alphaPaintFromIndex = data.levels.size
         animator.pause()
 
         if (data.withAnimation) {
-
             val prevLevels = this.data.levels
             val newLevels = data.levels
 
@@ -96,6 +98,17 @@ class WaveView @JvmOverloads constructor(
         }
     }
 
+    fun setPlayback(value: Float) {
+        val ratio = when {
+            value < 0F -> 0F
+            value > 1F -> 1F
+            else -> value
+        }
+        Log.d("Wave", "playback: ${floor(data.levels.size * ratio).toInt()}")
+        alphaPaintFromIndex = floor(data.levels.size * ratio).toInt()
+        invalidate()
+    }
+
     private fun initAttributes(context: Context, attrs: AttributeSet?) {
         val values = context.obtainStyledAttributes(attrs, R.styleable.WaveView)
         values.recycle()
@@ -107,7 +120,7 @@ class WaveView @JvmOverloads constructor(
         data.levels.forEachIndexed { index, level ->
             offsetX += levelMarginPx
 
-            val paint = if (index <= data.coloredToIndex) defaultPaint else alphaPaint
+            val paint = if (index < alphaPaintFromIndex) defaultPaint else alphaPaint
             val left = offsetX.toFloat()
             val top = (mid + level.percentAsPx()).toFloat()
             val right = (offsetX + LEVEL_WIDTH_PX).toFloat()

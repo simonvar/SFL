@@ -21,7 +21,7 @@ class Dictaphone {
         playbackFeature.init(SAMPLE_RATE)
     }
 
-    fun record(levelsCount: Int): Flow<LevelsData> {
+    fun record(levelsCount: Int): Flow<DictaphoneData> {
         return recordFeature.record(levelsCount)
             .map { values ->
                 recordedBuffer.addAll(values.toList())
@@ -30,7 +30,7 @@ class Dictaphone {
                     .map { it.max - it.min }
                     .map { (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt() }
 
-                LevelsData(levels)
+                DictaphoneData(levels, 0F)
             }
     }
 
@@ -38,33 +38,29 @@ class Dictaphone {
         recordFeature.stop()
     }
 
-    fun setupPlay(levelsCount: Int): LevelsData {
+    fun setupPlay(levelsCount: Int): DictaphoneData {
         val data = playbackFeature.setup(recordedBuffer.toShortArray())
 
         val levels = extremes(data.buffer, levelsCount)
             .map { it.max - it.min }
             .map { (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt() }
 
-        val playedBuffer = data.buffer.copyOfRange(0, data.offset)
+        val timeOverall = data.buffer.audioLength(SAMPLE_RATE)
 
-        val played = levels.size - extremes(playedBuffer, levelsCount)
-            .map { it.max - it.min }
-            .count()
 
-        return LevelsData(levels, played)
+        return DictaphoneData(levels, timeOverall)
     }
 
-    fun play(levelsCount: Int): Flow<LevelsData> {
+    fun play(levelsCount: Int): Flow<DictaphoneData> {
         return playbackFeature.play()
             .map { data ->
                 val levels = extremes(data.buffer, levelsCount)
                     .map { it.max - it.min }
                     .map { (it.toFloat() / (Short.MAX_VALUE * 2) * 100).toInt() }
 
-                val offsetRatio = data.offset.toFloat() / data.buffer.count()
-                val played = (levels.count() * offsetRatio).toInt()
+                val timeOverall = data.buffer.audioLength(SAMPLE_RATE)
 
-                LevelsData(levels, played)
+                DictaphoneData(levels, timeOverall)
             }
     }
 

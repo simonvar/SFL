@@ -59,14 +59,14 @@ class AudioPlaybackFeatureImpl : AudioPlaybackFeature {
 
         track.play()
         return flow {
+            emit(PlaybackData(bufferForPlay, playedOffset))
             while (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
-                emit(PlaybackData(bufferForPlay, playedOffset))
-
                 val lastIndex = min(playedOffset + bufferSize, bufferForPlay.size)
                 val buffer = bufferForPlay.copyOfRange(playedOffset, lastIndex)
                 val wrote = track.write(buffer, 0, buffer.size)
-
                 playedOffset += wrote
+
+                emit(PlaybackData(bufferForPlay, playedOffset))
             }
         }
     }

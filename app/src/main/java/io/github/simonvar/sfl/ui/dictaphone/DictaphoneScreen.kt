@@ -96,8 +96,8 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
 
     private fun initVM(params: WaveView.Params) {
         vm.onChangeLevelsCount(params.count)
-        vm.state bind this::handleRecordState
-        vm.data bind binding.waveform::setData
+        vm.dictaphoneState bind this::handleRecordState
+        vm.waveformState bind binding.waveform::setData
     }
 
     private fun handleRecordState(state: DictaphoneState) {

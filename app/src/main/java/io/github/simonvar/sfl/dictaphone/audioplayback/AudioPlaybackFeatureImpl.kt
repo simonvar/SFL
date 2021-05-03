@@ -60,15 +60,15 @@ class AudioPlaybackFeatureImpl : AudioPlaybackFeature {
         track.play()
         return flow {
             while (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
-                val lastIndex = min(playedOffset + 1, bufferForPlay.size)
+                emit(PlaybackData(bufferForPlay, playedOffset))
+
+                val lastIndex = min(playedOffset + bufferSize, bufferForPlay.size)
                 val buffer = bufferForPlay.copyOfRange(playedOffset, lastIndex)
                 val wrote = track.write(buffer, 0, buffer.size)
-                playedOffset += wrote
 
-                emit(PlaybackData(bufferForPlay, playedOffset))
+                playedOffset += wrote
             }
         }
-
     }
 
     override fun pause() {
@@ -77,6 +77,7 @@ class AudioPlaybackFeatureImpl : AudioPlaybackFeature {
 
     override fun reset() {
         track?.pause()
+        track?.stop()
         playedOffset = 0
     }
 

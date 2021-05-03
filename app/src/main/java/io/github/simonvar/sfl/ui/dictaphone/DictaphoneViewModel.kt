@@ -57,12 +57,11 @@ class DictaphoneViewModel : BaseViewModel() {
             } else {
                 levelsHistory.clear()
                 levelsHistory.addAll(levels.values)
-
-                updateWaveform(
-                    coloredTo = levels.played,
-                    withAnimation = false
-                )
             }
+            updateWaveform(
+                coloredTo = levels.played,
+                withAnimation = false
+            )
         }
     }
 

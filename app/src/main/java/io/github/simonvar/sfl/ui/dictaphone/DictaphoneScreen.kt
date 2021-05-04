@@ -124,11 +124,13 @@ class DictaphoneScreen : BaseScreen(R.layout.screen_dictaphone) {
     private fun moveToIdleState() = with(binding) {
         playingAnimator?.pause()
         playingAnimator = null
+        recordStopButton.text = getString(R.string.record)
         recordStopButton.jumpToState(CircleButton.FIRST)
         animatorFactory.moveToIdleStateAnimator().start()
     }
 
     private fun moveToRecordState() = with(binding) {
+        recordStopButton.text = getString(R.string.stop)
         recordStopButton.moveToState(CircleButton.SECOND)
         animatorFactory.moveToRecordStateAnimator().start()
     }
